@@ -45,8 +45,16 @@ const getEmailConfigError = (emailConfig) => {
     missing.push('EMAIL_PASS');
   }
 
+  if (!emailConfig.from) {
+    missing.push('EMAIL_FROM');
+  }
+
   if (missing.length) {
     return new Error(`Missing email configuration: ${missing.join(', ')}`);
+  }
+
+  if (!isValidEmail(emailConfig.from)) {
+    return new Error('EMAIL_FROM must be a valid email address');
   }
 
   return null;
