@@ -2,43 +2,63 @@ const fs = require('fs/promises');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const handlebars = require('handlebars');
+const Joi = require('joi');
 const config = require('../config');
 const logger = require('../utils/logger');
 
 const templatesDir = path.join(__dirname, '..', 'templates');
 
-const createTransporter = () => {
-  if (config.email.provider === 'sendgrid') {
-    if (!config.email.sendgridApiKey) {
-      throw new Error('SENDGRID_API_KEY is not configured');
-    }
+const emailSchema = Joi.string().email({ minDomainSegments: 2 });
 
+const isValidEmail = (value) => !emailSchema.validate(value).error;
+
+const createTransporter = (emailConfig) => {
+  if (emailConfig.host) {
     return nodemailer.createTransport({
-      service: 'SendGrid',
+      host: emailConfig.host,
+      port: emailConfig.port,
+      secure: emailConfig.secure,
       auth: {
-        user: 'apikey',
-        pass: config.email.sendgridApiKey
+        user: emailConfig.user,
+        pass: emailConfig.pass
       }
     });
   }
 
-  const { host, port, secure, user, pass } = config.email.smtp;
-
-  if (!host || !user || !pass) {
-    throw new Error('SMTP configuration is incomplete');
-  }
-
   return nodemailer.createTransport({
-    host,
-    port,
-    secure,
+    service: emailConfig.service || 'gmail',
     auth: {
-      user,
-      pass
+      user: emailConfig.user,
+      pass: emailConfig.pass
     }
   });
 };
 
+const getEmailConfigError = (emailConfig) => {
+  const missing = [];
+
+  if (!emailConfig.user) {
+    missing.push('EMAIL_USER');
+  }
+
+  if (!emailConfig.pass) {
+    missing.push('EMAIL_PASS');
+  }
+
+  if (!emailConfig.from) {
+    missing.push('EMAIL_FROM');
+  }
+
+  if (missing.length) {
+    return new Error(`Missing email configuration: ${missing.join(', ')}`);
+  }
+
+  if (!isValidEmail(emailConfig.from)) {
+    return new Error('EMAIL_FROM must be a valid email address');
+  }
+
+  return null;
+};
 
 const renderTemplate = async (templateName, context = {}) => {
   const templatePath = path.join(templatesDir, templateName);
@@ -47,23 +67,47 @@ const renderTemplate = async (templateName, context = {}) => {
   return template(context);
 };
 
-const sendEmail = async ({ to, subject, template, context, html, text }) => {
-  const renderedHtml = template ? await renderTemplate(template, context) : html;
+const createEmailService = (emailConfig = {}) => {
+  const configError = getEmailConfigError(emailConfig);
+  const transporter = configError ? null : createTransporter(emailConfig);
 
-  const transporter = createTransporter();
-  const mailOptions = {
-    from: config.email.from,
-    to,
-    subject,
-    html: renderedHtml,
-    text
+  const sendEmail = async ({ to, subject, template, context, html, text }) => {
+    if (configError) {
+      logger.error(configError.message);
+      return { success: false, error: configError };
+    }
+
+    if (!isValidEmail(to)) {
+      const error = new Error('Invalid recipient email address');
+      logger.error(error.message, { to });
+      return { success: false, error };
+    }
+
+    try {
+      const renderedHtml = template ? await renderTemplate(template, context) : html;
+      const mailOptions = {
+        from: emailConfig.from,
+        to,
+        subject,
+        html: renderedHtml,
+        text
+      };
+
+      const info = await transporter.sendMail(mailOptions);
+      logger.info('Email sent: %s', info.messageId);
+      return { ...info, success: true };
+    } catch (error) {
+      logger.error('Failed to send email', { error });
+      return { success: false, error };
+    }
   };
 
-  const info = await transporter.sendMail(mailOptions);
-  logger.info('Email sent: %s', info.messageId);
-  return info;
+  return { sendEmail };
 };
 
+const emailService = createEmailService(config.email);
+
 module.exports = {
-  sendEmail
+  ...emailService,
+  createEmailService
 };
