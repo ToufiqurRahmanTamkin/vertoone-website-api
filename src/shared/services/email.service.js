@@ -7,34 +7,38 @@ const logger = require('../utils/logger');
 
 const templatesDir = path.join(__dirname, '..', 'templates');
 
-const createTransporter = () => {
-  if (config.email.provider === 'sendgrid') {
-    if (!config.email.sendgridApiKey) {
-      throw new Error('SENDGRID_API_KEY is not configured');
-    }
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const isValidEmail = (value) => {
+  if (!value) {
+    return false;
+  }
+
+  if (Array.isArray(value)) {
+    return value.every((email) => emailPattern.test(email));
+  }
+
+  return emailPattern.test(value);
+};
+
+const createTransporter = (emailConfig) => {
+  if (emailConfig.host) {
     return nodemailer.createTransport({
-      service: 'SendGrid',
+      host: emailConfig.host,
+      port: emailConfig.port,
+      secure: emailConfig.secure,
       auth: {
-        user: 'apikey',
-        pass: config.email.sendgridApiKey
+        user: emailConfig.user,
+        pass: emailConfig.pass
       }
     });
   }
 
-  const { host, port, secure, user, pass } = config.email.smtp;
-
-  if (!host || !user || !pass) {
-    throw new Error('SMTP configuration is incomplete');
-  }
-
   return nodemailer.createTransport({
-    host,
-    port,
-    secure,
+    service: emailConfig.service || 'gmail',
     auth: {
-      user,
-      pass
+      user: emailConfig.user,
+      pass: emailConfig.pass
     }
   });
 };
@@ -47,23 +51,47 @@ const renderTemplate = async (templateName, context = {}) => {
   return template(context);
 };
 
-const sendEmail = async ({ to, subject, template, context, html, text }) => {
-  const renderedHtml = template ? await renderTemplate(template, context) : html;
+const createEmailService = (emailConfig = {}) => {
+  const transporter = createTransporter(emailConfig);
 
-  const transporter = createTransporter();
-  const mailOptions = {
-    from: config.email.from,
-    to,
-    subject,
-    html: renderedHtml,
-    text
+  const sendEmail = async ({ to, subject, template, context, html, text }) => {
+    if (!emailConfig.user || !emailConfig.pass) {
+      const error = new Error('EMAIL_USER and EMAIL_PASS must be configured');
+      logger.error(error.message);
+      return { success: false, error };
+    }
+
+    if (!isValidEmail(to)) {
+      const error = new Error('Invalid recipient email address');
+      logger.error(error.message, { to });
+      return { success: false, error };
+    }
+
+    try {
+      const renderedHtml = template ? await renderTemplate(template, context) : html;
+      const mailOptions = {
+        from: emailConfig.from,
+        to,
+        subject,
+        html: renderedHtml,
+        text
+      };
+
+      const info = await transporter.sendMail(mailOptions);
+      logger.info('Email sent: %s', info.messageId);
+      return { success: true, info };
+    } catch (error) {
+      logger.error('Failed to send email', { error });
+      return { success: false, error };
+    }
   };
 
-  const info = await transporter.sendMail(mailOptions);
-  logger.info('Email sent: %s', info.messageId);
-  return info;
+  return { sendEmail };
 };
 
+const emailService = createEmailService(config.email);
+
 module.exports = {
-  sendEmail
+  ...emailService,
+  createEmailService
 };

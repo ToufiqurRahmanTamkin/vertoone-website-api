@@ -24,26 +24,26 @@ Production-ready backend API for the Vertoone website built with Node.js, Expres
 
 ## 📧 Email Configuration Guide
 
-The API supports SMTP and SendGrid via `nodemailer`.
+The API uses free SMTP via `nodemailer` (Gmail by default).
 
-### SMTP
+### Gmail SMTP (recommended)
 Set in `.env`:
 ```
-EMAIL_PROVIDER=smtp
+EMAIL_SERVICE=gmail
 EMAIL_FROM=no-reply@vertoone.com
-SMTP_HOST=smtp.yourhost.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your-user
-SMTP_PASS=your-pass
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
 ```
 
-### SendGrid
+### Custom SMTP provider
 Set in `.env`:
 ```
-EMAIL_PROVIDER=sendgrid
-SENDGRID_API_KEY=your-sendgrid-api-key
 EMAIL_FROM=no-reply@vertoone.com
+EMAIL_HOST=smtp.yourhost.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your-user
+EMAIL_PASS=your-pass
 ```
 
 > Optional admin notifications for contact submissions:

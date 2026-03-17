@@ -26,16 +26,13 @@ const config = {
     expiresIn: process.env.JWT_EXPIRES_IN || '1d'
   },
   email: {
-    provider: process.env.EMAIL_PROVIDER || 'smtp',
     from: process.env.EMAIL_FROM || 'no-reply@vertoone.com',
-    smtp: {
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
-      secure: parseBoolean(process.env.SMTP_SECURE, false),
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    },
-    sendgridApiKey: process.env.SENDGRID_API_KEY,
+    service: process.env.EMAIL_SERVICE || 'gmail',
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : 587,
+    secure: parseBoolean(process.env.EMAIL_SECURE, false),
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
     adminNotificationEmail: process.env.ADMIN_NOTIFICATION_EMAIL
   },
   admin: {
