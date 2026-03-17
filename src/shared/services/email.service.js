@@ -43,6 +43,13 @@ const createTransporter = (emailConfig) => {
   });
 };
 
+const getConfigError = (emailConfig) => {
+  if (!emailConfig.user || !emailConfig.pass) {
+    return new Error('EMAIL_USER and EMAIL_PASS must be configured');
+  }
+
+  return null;
+};
 
 const renderTemplate = async (templateName, context = {}) => {
   const templatePath = path.join(templatesDir, templateName);
@@ -52,13 +59,13 @@ const renderTemplate = async (templateName, context = {}) => {
 };
 
 const createEmailService = (emailConfig = {}) => {
-  const transporter = createTransporter(emailConfig);
+  const configError = getConfigError(emailConfig);
+  const transporter = configError ? null : createTransporter(emailConfig);
 
   const sendEmail = async ({ to, subject, template, context, html, text }) => {
-    if (!emailConfig.user || !emailConfig.pass) {
-      const error = new Error('EMAIL_USER and EMAIL_PASS must be configured');
-      logger.error(error.message);
-      return { success: false, error };
+    if (configError) {
+      logger.error(configError.message);
+      return { success: false, error: configError };
     }
 
     if (!isValidEmail(to)) {
