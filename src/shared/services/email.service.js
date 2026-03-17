@@ -8,10 +8,7 @@ const logger = require('../utils/logger');
 
 const templatesDir = path.join(__dirname, '..', 'templates');
 
-const emailSchema = Joi.alternatives().try(
-  Joi.string().email({ tlds: { allow: false } }),
-  Joi.array().items(Joi.string().email({ tlds: { allow: false } })).min(1)
-);
+const emailSchema = Joi.string().email({ tlds: { allow: false } });
 
 const isValidEmail = (value) => !emailSchema.validate(value).error;
 
@@ -37,7 +34,7 @@ const createTransporter = (emailConfig) => {
   });
 };
 
-const getConfigError = (emailConfig) => {
+const validateEmailConfig = (emailConfig) => {
   if (!emailConfig.user || !emailConfig.pass) {
     return new Error('EMAIL_USER and EMAIL_PASS must be configured');
   }
@@ -53,7 +50,7 @@ const renderTemplate = async (templateName, context = {}) => {
 };
 
 const createEmailService = (emailConfig = {}) => {
-  const configError = getConfigError(emailConfig);
+  const configError = validateEmailConfig(emailConfig);
   const transporter = configError ? null : createTransporter(emailConfig);
 
   const sendEmail = async ({ to, subject, template, context, html, text }) => {
