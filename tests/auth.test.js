@@ -1,8 +1,5 @@
 process.env.JWT_SECRET = 'test-secret';
 process.env.EMAIL_SERVICE = 'gmail';
-process.env.EMAIL_HOST = '';
-process.env.EMAIL_PORT = '587';
-process.env.EMAIL_SECURE = 'false';
 process.env.EMAIL_USER = 'test-user';
 process.env.EMAIL_PASS = 'test-pass';
 process.env.EMAIL_FROM = 'no-reply@test.com';

@@ -2,24 +2,18 @@ const fs = require('fs/promises');
 const path = require('path');
 const nodemailer = require('nodemailer');
 const handlebars = require('handlebars');
+const Joi = require('joi');
 const config = require('../config');
 const logger = require('../utils/logger');
 
 const templatesDir = path.join(__dirname, '..', 'templates');
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailSchema = Joi.alternatives().try(
+  Joi.string().email({ tlds: { allow: false } }),
+  Joi.array().items(Joi.string().email({ tlds: { allow: false } })).min(1)
+);
 
-const isValidEmail = (value) => {
-  if (!value) {
-    return false;
-  }
-
-  if (Array.isArray(value)) {
-    return value.every((email) => emailPattern.test(email));
-  }
-
-  return emailPattern.test(value);
-};
+const isValidEmail = (value) => !emailSchema.validate(value).error;
 
 const createTransporter = (emailConfig) => {
   if (emailConfig.host) {
@@ -86,7 +80,7 @@ const createEmailService = (emailConfig = {}) => {
 
       const info = await transporter.sendMail(mailOptions);
       logger.info('Email sent: %s', info.messageId);
-      return { success: true, info };
+      return { ...info, success: true };
     } catch (error) {
       logger.error('Failed to send email', { error });
       return { success: false, error };
