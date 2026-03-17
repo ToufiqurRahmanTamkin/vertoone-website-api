@@ -8,7 +8,7 @@ const logger = require('../utils/logger');
 
 const templatesDir = path.join(__dirname, '..', 'templates');
 
-const emailSchema = Joi.string().email({ tlds: { allow: false }, minDomainSegments: 2 });
+const emailSchema = Joi.string().email({ minDomainSegments: 2 });
 
 const isValidEmail = (value) => !emailSchema.validate(value).error;
 
@@ -51,11 +51,10 @@ const renderTemplate = async (templateName, context = {}) => {
 
 const createEmailService = (emailConfig = {}) => {
   const configError = getEmailConfigError(emailConfig);
-  const hasConfigError = configError instanceof Error;
-  const transporter = hasConfigError ? null : createTransporter(emailConfig);
+  const transporter = configError ? null : createTransporter(emailConfig);
 
   const sendEmail = async ({ to, subject, template, context, html, text }) => {
-    if (hasConfigError) {
+    if (configError) {
       logger.error(configError.message);
       return { success: false, error: configError };
     }

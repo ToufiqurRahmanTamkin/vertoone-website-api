@@ -27,8 +27,8 @@ const app = require('../src/app');
 
 describe('Newsletters', () => {
   beforeEach(() => {
-    mockFindByEmail.mockReset();
-    mockCreateSubscription.mockReset();
+    mockFindByEmail.mockClear();
+    mockCreateSubscription.mockClear();
     mockSendMail.mockClear();
     mockCreateTransport.mockClear();
   });

@@ -26,7 +26,7 @@ const app = require('../src/app');
 
 describe('Contacts', () => {
   beforeEach(() => {
-    mockCreateContact.mockReset();
+    mockCreateContact.mockClear();
     mockSendMail.mockClear();
     mockCreateTransport.mockClear();
   });
