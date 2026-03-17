@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Confirmation</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f6f8;
+        padding: 24px;
+        color: #1f2933;
+      }
+      .container {
+        background: #ffffff;
+        padding: 24px;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .heading {
+        font-size: 20px;
+        margin-bottom: 16px;
+      }
+      .highlight {
+        background: #f0f4f8;
+        padding: 12px;
+        border-radius: 6px;
+        margin-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="heading">Thanks for reaching out, {{firstName}}!</div>
+      <p>We appreciate you contacting Vertoone. Our team will review your message and get back to you shortly.</p>
+      <div class="highlight">
+        <strong>Subject:</strong> {{subject}}
+      </div>
+      <p style="margin-top: 16px;">Best regards,<br />The Vertoone Team</p>
+    </div>
+  </body>
+</html>
