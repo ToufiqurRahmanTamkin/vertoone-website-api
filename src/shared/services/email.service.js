@@ -35,8 +35,18 @@ const createTransporter = (emailConfig) => {
 };
 
 const getEmailConfigError = (emailConfig) => {
-  if (!emailConfig.user || !emailConfig.pass) {
-    return new Error('EMAIL_USER and EMAIL_PASS must be configured');
+  const missing = [];
+
+  if (!emailConfig.user) {
+    missing.push('EMAIL_USER');
+  }
+
+  if (!emailConfig.pass) {
+    missing.push('EMAIL_PASS');
+  }
+
+  if (missing.length) {
+    return new Error(`Missing email configuration: ${missing.join(', ')}`);
   }
 
   return null;
