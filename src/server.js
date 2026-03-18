@@ -48,8 +48,13 @@ connectToDatabase().catch((error) => {
 });
 
 if (!process.env.VERCEL) {
-  app.listen(config.port, () => {
+  const server = app.listen(config.port, () => {
     logger.info('Server running on port %s', config.port);
+  });
+
+  server.on('error', (error) => {
+    logger.error('Failed to start server', error);
+    process.exit(1);
   });
 }
 

@@ -22,7 +22,11 @@ const connectToDatabase = async () => {
       .connect(mongoUri, {
         maxPoolSize: 10
       })
-      .then((mongooseInstance) => mongooseInstance);
+      .then((mongooseInstance) => mongooseInstance)
+      .catch((error) => {
+        cached.promise = null;
+        throw error;
+      });
   }
 
   cached.conn = await cached.promise;
