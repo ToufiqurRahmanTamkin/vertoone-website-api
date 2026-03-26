@@ -30,11 +30,15 @@ const seedSuperAdmin = async () => {
   logger.info('Super admin seeded successfully');
 };
 
-seedSuperAdmin()
-  .catch((error) => {
-    logger.error('Failed to seed super admin', error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await disconnectDatabase();
-  });
+if (require.main === module) {
+  seedSuperAdmin()
+    .catch((error) => {
+      logger.error('Failed to seed super admin', error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await disconnectDatabase();
+    });
+}
+
+module.exports = seedSuperAdmin;

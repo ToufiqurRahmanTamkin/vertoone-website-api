@@ -10,6 +10,7 @@ const dbConnectMiddleware = require('./shared/middlewares/db-connect.middleware'
 const logger = require('./shared/utils/logger');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./shared/config/swagger');
+const seedSuperAdmin = require('./shared/database/seed-super-admin');
 
 const authRoutes = require('./modules/auths/auth.routes');
 const blogRoutes = require('./modules/blogs/blog.routes');
@@ -51,6 +52,31 @@ app.get('/', (_req, res) => {
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
+});
+
+app.post('/api/seed', async (req, res) => {
+  const secret = req.headers['x-seed-secret'] || req.query.secret;
+  
+  if (!secret || secret !== process.env.SEED_SECRET) {
+    return res.status(403).json({ 
+      success: false, 
+      message: 'Invalid or missing seed secret' 
+    });
+  }
+
+  try {
+    await seedSuperAdmin();
+    res.status(200).json({ 
+      success: true, 
+      message: 'Super admin seeded successfully' 
+    });
+  } catch (error) {
+    logger.error('Seeding failed', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
 });
 
 const swaggerOptions = {
