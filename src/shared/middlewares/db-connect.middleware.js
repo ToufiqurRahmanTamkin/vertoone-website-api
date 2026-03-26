@@ -11,7 +11,7 @@ const dbConnectMiddleware = async (req, res, next) => {
     if (error.message && (error.message.includes('Authentication failed') || error.message.includes('bad auth'))) {
       return res.status(500).json({
         success: false,
-        message: 'Database authentication failed. Please check your MONGODB_URI credentials.'
+        message: error.message
       });
     }
     next(error);
