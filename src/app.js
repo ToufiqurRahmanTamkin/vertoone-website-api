@@ -6,6 +6,7 @@ const config = require('./shared/config');
 const rateLimiter = require('./shared/middlewares/rate-limit.middleware');
 const sanitizeMiddleware = require('./shared/middlewares/sanitize.middleware');
 const errorHandler = require('./shared/middlewares/error.middleware');
+const dbConnectMiddleware = require('./shared/middlewares/db-connect.middleware');
 const logger = require('./shared/utils/logger');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./shared/config/swagger');
@@ -30,6 +31,9 @@ app.use(rateLimiter);
 app.use(express.json({ limit: '1mb' }));
 app.use(mongoSanitize());
 app.use(sanitizeMiddleware);
+// Ensure DB connection for all routes (Vercel optimization)
+app.use(dbConnectMiddleware);
+
 
 app.use((req, _res, next) => {
   logger.info('%s %s', req.method, req.originalUrl);
@@ -50,8 +54,11 @@ app.get('/health', (_req, res) => {
 });
 
 const swaggerOptions = {
-  customCssUrl:
-    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css',
+  customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css',
+  customJs: [
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-bundle.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui-standalone-preset.js'
+  ],
   customSiteTitle: 'Vertoone API Docs'
 };
 
