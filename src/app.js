@@ -19,7 +19,7 @@ const newsletterRoutes = require('./modules/newsletters/newsletter.routes');
 const app = express();
 
 app.set('trust proxy', 1);
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(
   cors({
     origin: config.corsOrigin,
@@ -36,11 +36,26 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Vertoone Website API is running',
+    version: '1.0.0',
+    documentation: '/api-docs'
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const swaggerOptions = {
+  customCssUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.0.0/swagger-ui.min.css',
+  customSiteTitle: 'Vertoone API Docs'
+};
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
 
 app.use('/api/v1/auths', authRoutes);
 app.use('/api/v1/blogs', blogRoutes);
