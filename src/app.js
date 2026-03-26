@@ -54,10 +54,19 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.post('/api/seed', async (req, res) => {
+app.all('/api/seed', async (req, res) => {
   const secret = req.headers['x-seed-secret'] || req.query.secret;
+  const envSecret = process.env.SEED_SECRET;
+
+  if (!envSecret) {
+    logger.error('SEED_SECRET environment variable is not set on the server');
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server misconfiguration: SEED_SECRET is missing from environment variables' 
+    });
+  }
   
-  if (!secret || secret !== process.env.SEED_SECRET) {
+  if (!secret || secret !== envSecret) {
     return res.status(403).json({ 
       success: false, 
       message: 'Invalid or missing seed secret' 
